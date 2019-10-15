@@ -69,6 +69,9 @@ def create_app(test_config=None):
   @app.route('/questions', methods=['GET'])
   def get_questions():
     page = request.args.get('page', 1, type=int)
+    if page < 1:
+      abort(422)
+
     page_size = 10
     questions = Question.query.filter().limit(page_size).offset((page-1)*page_size).all()
 
@@ -194,18 +197,28 @@ def create_app(test_config=None):
   '''
   @app.route("/categories/<category_id>/questions", methods=['GET'])
   def get_questions_by_categories(category_id):
-    category = Category.query.filter(Category.id==category_id).first()
+    error = False
+    try:
+      category = Category.query.filter(Category.id==category_id).first()
 
-    questionResults = []
-    for question in category.questions:
-      questionResults.append(question.format())
+      questionResults = []
+      for question in category.questions:
+        questionResults.append(question.format())
+
+    except:
+      error = True
+    finally:
+      # do not want to publish a 500 message
+      # return 422 here
+        if error:
+          abort(422)
 
     return jsonify({
       "totalQuestions": len(questionResults),
       "questions": questionResults,
       "currentCategory": category.type
     })
-
+      
   '''
   @TODO: 
   Create a POST endpoint to get questions to play the quiz. 
@@ -276,7 +289,7 @@ def create_app(test_config=None):
     return jsonify({
       "success": False,
       "error": 422,
-      "message": "Not Found"
+      "message": "Unprocessable entity"
     }), 422
   
   return app
