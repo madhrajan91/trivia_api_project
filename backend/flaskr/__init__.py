@@ -24,10 +24,8 @@ def create_app(test_config=None):
   '''
   @app.after_request
   def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-METHODS', 'GET,PATCH,POST,DELETE,OPTIONS')
-    #response.headers.add('Access-Control-Allow-Credentials', 'true')
     print (response.headers)
     return response
   
@@ -173,21 +171,28 @@ def create_app(test_config=None):
   #https://stackoverflow.com/questions/5020704/how-to-design-restful-search-filtering
   @app.route('/questionsearch', methods=['POST'])
   def search_question():
+
     data = request.get_json()
+
+    if data is None or "searchTerm" not in data:
+      abort(404)
+    
     searchTerm = data["searchTerm"]
-    #searchTerm = "%{}%".format(searchTerm)
     print(searchTerm)
     questions = Question.query.filter(Question.question.ilike('%'+searchTerm+'%')).all()
 
-    questionResults = []
-    for question in questions:
-      questionResults.append(question.format())
+    if (len(questions)>0):
+      questionResults = []
+      for question in questions:
+        questionResults.append(question.format())
 
-    return jsonify({
-      "totalQuestions": len(questionResults),
-      "questions": questionResults,
-      "currentCategory": '-'
-    })
+      return jsonify({
+        "totalQuestions": len(questionResults),
+        "questions": questionResults,
+        "currentCategory": '-'
+      })
+    else:
+      abort(404)
   '''
   @TODO: 
   Create a GET endpoint to get questions based on category. 
@@ -276,6 +281,14 @@ def create_app(test_config=None):
   '''
   # Implementing one error handler for 404 and one error handler for 422
   # I could put both in one handler instead
+
+  @app.errorhandler(400)
+  def unprocessable_entity(error):
+    return jsonify({
+      "success": False,
+      "error": 400,
+      "message": "Bad request"
+    }), 400
 
   @app.errorhandler(404)
   def not_found(error):

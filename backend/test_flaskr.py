@@ -138,9 +138,67 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(q.category, 1)
 
 
-    def test_search_question(self):
+        #negative if bad json data
+        #negative test 1
+        # 400 if bad body
+        res = self.client().post("/questions",                                 
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        
+        data = json.loads(res.data)
+        self.assertEqual(data["message"],"Bad request")
 
-        pass
+
+    def test_search_question(self):
+        # postive search
+        question = Question(question="testQuestionSearch", 
+                            answer="testAnswerSearch", 
+                            category=1,
+                            difficulty=1)
+        # insert
+        question.insert()
+        id = question.id
+            
+        # add a clean up incase the test fails
+        def clean_up():
+            questions = Question.query.filter(Question.question == "testQuestionSearch").all()
+            for question in questions:
+                question.delete()
+        self.addCleanup(clean_up)
+
+        res = self.client().post("/questionsearch",
+                                data=json.dumps({
+                                    "searchTerm": "questionSearch"
+                                 }),
+                                 content_type="application/json")
+        
+        self.assertEqual(res.status_code, 200)
+
+        data = json.loads(res.data)
+        self.assertEqual(data["totalQuestions"], 1)
+        self.assertEqual(data["questions"][0]["answer"], "testAnswerSearch")
+    
+
+        #negative test 1
+        # 400 if bad body
+        res = self.client().post("/questionsearch",                                 
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 400)
+        
+        data = json.loads(res.data)
+        self.assertEqual(data["message"],"Bad request")
+
+        #negative if not found
+        # 404
+        res = self.client().post("/questionsearch",
+                                data=json.dumps({
+                                    "searchTerm": "notaquestion"
+                                 }),
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 404)
+        
+        data = json.loads(res.data)
+        self.assertEqual(data["message"],"Not Found")
 
     def test_get_questions_by_category(self):
         # positive test
