@@ -51,10 +51,12 @@ class Question(db.Model):
     db.session.delete(self)
     db.session.commit()
   
-  def rollback(self):
+  @staticmethod
+  def rollback():
     db.session.rollback()
   
-  def close(self):
+  @staticmethod
+  def close():
     db.session.close()
 
   def format(self):

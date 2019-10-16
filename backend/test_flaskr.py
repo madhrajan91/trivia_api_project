@@ -66,6 +66,82 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().get("/questions?page=-1")
         self.assertEqual(res.status_code, 422)
 
+    def test_delete_question(self):
+        # create a question and then delete
+        # you can call the create endpoint but we are unittesting
+        # so just create with backend, reason below
+        # (do not want to use one endpoint(create) to test another(delete))
+        question = Question(question="testQuestionDelete", 
+                            answer="testAnswerDelete", 
+                            category=1,
+                            difficulty=1)
+        # insert
+        question.insert()
+        id = question.id
+            
+        # add a clean up incase the test fails
+        def clean_up():
+            questions = Question.query.filter(Question.question == "testQuestionDelete").all()
+            for question in questions:
+                question.delete()
+        self.addCleanup(clean_up)
+            
+        # retrieve
+        q = Question.query.filter(Question.question == "testQuestionDelete").first()
+        print (q.format())
+        self.assertEqual(q.question,"testQuestionDelete")
+        self.assertEqual(q.answer, "testAnswerDelete")
+
+        res = self.client().delete("/questions/"+str(id))
+        self.assertEqual(res.status_code, 200)
+
+        print(res.data)
+        data = json.loads(res.data)
+        #verify response data
+        self.assertEqual(data["success"], True)
+        self.assertEqual(len(Question.query.filter(Question.question == "testQuestionDelete").all()), 0)
+
+        
+        #negative
+        res = self.client().delete("/questions/"+str(0))
+        self.assertEqual(res.status_code, 422)
+
+    def test_add_question(self):
+        # add a clean up incase the test fails
+        def clean_up():
+            questions = Question.query.filter(Question.question == "testQuestionAdd").all()
+            for question in questions:
+                question.delete()
+        self.addCleanup(clean_up)
+        # insert
+        res = self.client().post("/questions",
+                                data=json.dumps({
+                                    "question": "testQuestionAdd",
+                                    "answer": "testAnswerAdd",
+                                    "difficulty": 4,
+                                    "category": 1
+                                 }),
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+
+        print(res.data)
+        data = json.loads(res.data)
+        #verify response data
+        self.assertEqual(data["success"], True)
+           
+        # retrieve
+        q = Question.query.filter(Question.question == "testQuestionAdd").first()
+        print (q.format())
+        self.assertEqual(q.question,"testQuestionAdd")
+        self.assertEqual(q.answer, "testAnswerAdd")
+        self.assertEqual(q.difficulty, 4)
+        self.assertEqual(q.category, 1)
+
+
+    def test_search_question(self):
+
+        pass
+
     def test_get_questions_by_category(self):
         # positive test
         res = self.client().get("/categories/1/questions")
@@ -90,6 +166,9 @@ class TriviaTestCase(unittest.TestCase):
         #negative, error
         res = self.client().get("/categories/0/questions")
         self.assertEqual(res.status_code, 422)
+    
+    def test_quizzes(self):
+        pass
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

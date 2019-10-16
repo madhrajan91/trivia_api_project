@@ -105,25 +105,28 @@ def create_app(test_config=None):
 
   @app.route('/questions/<question_id>', methods=['DELETE'])
   def delete_questions(question_id):
-    print("question id")
-    question = Question.query.get(question_id)
+    error = False
+    
     try:
-      
-      print (question.format())
-      #question.delete()
-      #db.session.delete(question)
-      #db.session.commit()
-    except:
-      question.rollback()
-      #print(sys.exc_info)
-      # lets just go with 422
-      abort(422)
-    finally:
-      question.close()
+      question = Question.query.filter(Question.id == question_id).first()
+      #print (question.format())
+      if question is None:
+        error = True
+      else:
+        question.delete()
 
+    except:
+      error = True
+      Question.rollback()
+    finally:
+      Question.close()
+      # do not want to publish a 500 message
+      # return 422 here
+      if error:
+        abort(422)
     
     return jsonify({
-      "success": True
+        "success": True
     })
 
   '''
@@ -145,8 +148,6 @@ def create_app(test_config=None):
                           category=data["category"],
                           difficulty=data["difficulty"])
     try:
-      
-      print (question.format())
       question.insert()
 
     except:
@@ -156,7 +157,7 @@ def create_app(test_config=None):
       question.close()
     
     return jsonify({
-      "success": "true"
+      "success": True
     })
 
   '''
