@@ -267,31 +267,45 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.data)
         self.assertIn("question", data)
-        #self.assertTrue(data["question"]["id"] == question1.id or data["question"]["id"] == question2.id)
+        self.assertTrue(data["question"]["category"] == self.testCategoryId)
 
-    #     # positive 3: Previous question
-    #     res = self.client().post("/quizzes",
-    #                              data=json.dumps({
-    #                                "previous_questions": [question2.id],
-    #                                "quiz_category": category.id
-    #                              }),
-    #                              content_type="application/json")
-    #     self.assertEqual(res.status_code, 200)
-    #     data = json.loads(res.data)
-    #     self.assertIn("question", data)
-    #     self.assertTrue(data["question"]["id"] == question1.id)
+        # positive 3: Previous question
+        res = self.client().post("/quizzes",
+                                 data=json.dumps({
+                                   "previous_questions": [question2.id],
+                                   "quiz_category": {
+                                        "id": self.testCategoryId,
+                                        "type" : self.testCategoryType
+                                   }
+                                 }),
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        print (data)
+        self.assertIn("question", data)
+        self.assertTrue(data["question"]["id"] != question2.id)
 
-    #     # positive 4: No more questions
-    #     # returns empty data
-    #     res = self.client().post("/quizzes",
-    #                              data=json.dumps({
-    #                                "previous_questions": [question1.id, question2.id],
-    #                                "quiz_category": category.id,
-    #                              }),
-    #                              content_type="application/json")
-    #     self.assertEqual(res.status_code, 200)
-    #     data = json.loads(res.data)
-    #     self.assertIsNone(data)
+        # positive 4: No more questions
+        # returns empty data
+
+        # get list of questionids to send as previous questions
+        questions = Question.query.filter(Question.category == self.testCategoryId).all()
+        prevQuestionIds = []
+        for question in questions:
+            prevQuestionIds.append(question.id)
+        
+        res = self.client().post("/quizzes",
+                                 data=json.dumps({
+                                   "previous_questions": prevQuestionIds,
+                                   "quiz_category": {
+                                        "id": self.testCategoryId,
+                                        "type" : self.testCategoryType
+                                   }
+                                 }),
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertEqual(data, {})
 
 
 # Make the tests conveniently executable
