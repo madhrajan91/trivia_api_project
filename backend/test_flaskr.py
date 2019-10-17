@@ -24,10 +24,29 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
+        
+        # create testCategory
+        category = Category(type="testCategory")
+        category.insert()
+        self.testCategoryId = category.id
+        self.testCategoryType = category.type
+
+        self.testQuestion = Question(question="testQuestion", 
+                            answer="testAnswerDelete", 
+                            category=category.id,
+                            difficulty=1)
+        self.testQuestion.insert()
     
     def tearDown(self):
         """Executed after reach test"""
-        pass
+
+        questions = Question.query.filter(Question.category == self.testCategoryId).all()
+        for question in questions:
+            question.delete()
+
+        category = Category.query.get(self.testCategoryId)
+        category.delete()
+
 
     """
     TODO
@@ -39,7 +58,8 @@ class TriviaTestCase(unittest.TestCase):
         
         data = json.loads(res.data)
         self.assertIsNotNone(data["categories"])
-        self.assertEqual(data["categories"]["1"], "Science")
+        print(data["categories"])
+        self.assertEqual(data["categories"][str(self.testCategoryId)], self.testCategoryType)
 
     def test_get_questions(self):
         # positive test
@@ -73,18 +93,11 @@ class TriviaTestCase(unittest.TestCase):
         # (do not want to use one endpoint(create) to test another(delete))
         question = Question(question="testQuestionDelete", 
                             answer="testAnswerDelete", 
-                            category=1,
+                            category=self.testCategoryId,
                             difficulty=1)
         # insert
         question.insert()
         id = question.id
-            
-        # add a clean up incase the test fails
-        def clean_up():
-            questions = Question.query.filter(Question.question == "testQuestionDelete").all()
-            for question in questions:
-                question.delete()
-        self.addCleanup(clean_up)
             
         # retrieve
         q = Question.query.filter(Question.question == "testQuestionDelete").first()
@@ -107,19 +120,13 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
 
     def test_add_question(self):
-        # add a clean up incase the test fails
-        def clean_up():
-            questions = Question.query.filter(Question.question == "testQuestionAdd").all()
-            for question in questions:
-                question.delete()
-        self.addCleanup(clean_up)
         # insert
         res = self.client().post("/questions",
                                 data=json.dumps({
                                     "question": "testQuestionAdd",
                                     "answer": "testAnswerAdd",
                                     "difficulty": 4,
-                                    "category": 1
+                                    "category": self.testCategoryId
                                  }),
                                  content_type="application/json")
         self.assertEqual(res.status_code, 200)
@@ -135,7 +142,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(q.question,"testQuestionAdd")
         self.assertEqual(q.answer, "testAnswerAdd")
         self.assertEqual(q.difficulty, 4)
-        self.assertEqual(q.category, 1)
+        self.assertEqual(q.category, self.testCategoryId)
 
 
         #negative if bad json data
@@ -153,18 +160,12 @@ class TriviaTestCase(unittest.TestCase):
         # postive search
         question = Question(question="testQuestionSearch", 
                             answer="testAnswerSearch", 
-                            category=1,
+                            category=self.testCategoryId,
                             difficulty=1)
         # insert
         question.insert()
         id = question.id
-            
-        # add a clean up incase the test fails
-        def clean_up():
-            questions = Question.query.filter(Question.question == "testQuestionSearch").all()
-            for question in questions:
-                question.delete()
-        self.addCleanup(clean_up)
+    
 
         res = self.client().post("/questionsearch",
                                 data=json.dumps({
@@ -202,11 +203,11 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_get_questions_by_category(self):
         # positive test
-        res = self.client().get("/categories/1/questions")
+        res = self.client().get("/categories/" + str(self.testCategoryId) + "/questions")
         self.assertEqual(res.status_code, 200)
 
         data = json.loads(res.data)
-        self.assertTrue(data["currentCategory"], "Science")
+        self.assertTrue(data["currentCategory"], self.testCategoryType)
 
         #assumes atleast one question exists
         self.assertTrue("questions" in data)
@@ -226,7 +227,72 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
     
     def test_quizzes(self):
-        pass
+        
+
+        question2 = Question(question="testQuestion2", 
+                            answer="testAnswerDelete", 
+                            category=self.testCategoryId,
+                            difficulty=1)
+            
+    #     # insert
+    #     question1.insert()
+        question2.insert()
+
+
+        
+        # positive 1: No category
+        res = self.client().post("/quizzes",
+                                data=json.dumps({
+                                   "previous_questions": [],
+                                 }),
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn("question", data)
+        self.assertTrue(data["question"]["id"] > 0)
+
+        # positive 2: One category
+        res = self.client().post("/quizzes",
+                                 data=json.dumps({
+                                   "previous_questions": [],
+                                   "quiz_category": {
+                                        "id": self.testCategoryId,
+                                        "type" : self.testCategoryType
+                                   }
+                                 }),
+                                 content_type="application/json")
+        self.assertEqual(res.status_code, 200)
+        print(res.data)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.data)
+        self.assertIn("question", data)
+        #self.assertTrue(data["question"]["id"] == question1.id or data["question"]["id"] == question2.id)
+
+    #     # positive 3: Previous question
+    #     res = self.client().post("/quizzes",
+    #                              data=json.dumps({
+    #                                "previous_questions": [question2.id],
+    #                                "quiz_category": category.id
+    #                              }),
+    #                              content_type="application/json")
+    #     self.assertEqual(res.status_code, 200)
+    #     data = json.loads(res.data)
+    #     self.assertIn("question", data)
+    #     self.assertTrue(data["question"]["id"] == question1.id)
+
+    #     # positive 4: No more questions
+    #     # returns empty data
+    #     res = self.client().post("/quizzes",
+    #                              data=json.dumps({
+    #                                "previous_questions": [question1.id, question2.id],
+    #                                "quiz_category": category.id,
+    #                              }),
+    #                              content_type="application/json")
+    #     self.assertEqual(res.status_code, 200)
+    #     data = json.loads(res.data)
+    #     self.assertIsNone(data)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
