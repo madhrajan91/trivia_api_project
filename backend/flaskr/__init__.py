@@ -33,8 +33,8 @@ def create_app(test_config=None):
   @app.route('/')
   @cross_origin()
   def index():
-    return jsonify(name = "Madhav",
-                   message = 'hello-world')
+    return jsonify(name = "Index",
+                   message = 'This is a homepage message')
 
   '''
   @TODO: 

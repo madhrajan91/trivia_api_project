@@ -31,6 +31,7 @@ class TriviaTestCase(unittest.TestCase):
         self.testCategoryId = category.id
         self.testCategoryType = category.type
 
+        # create a testQuestion in the test category
         self.testQuestion = Question(question="testQuestion", 
                             answer="testAnswerDelete", 
                             category=category.id,
@@ -40,18 +41,17 @@ class TriviaTestCase(unittest.TestCase):
     def tearDown(self):
         """Executed after reach test"""
 
+        # delete all questions in testCategory
         questions = Question.query.filter(Question.category == self.testCategoryId).all()
         for question in questions:
             question.delete()
 
+        # delete test category
         category = Category.query.get(self.testCategoryId)
         category.delete()
 
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
+    # test get_categories
     def test_get_categories(self):
         res = self.client().get("/categories")
         self.assertEqual(res.status_code, 200)
@@ -61,6 +61,7 @@ class TriviaTestCase(unittest.TestCase):
         print(data["categories"])
         self.assertEqual(data["categories"][str(self.testCategoryId)], self.testCategoryType)
 
+    # test get_questions
     def test_get_questions(self):
         # positive test
         res = self.client().get("/questions?page=1")
@@ -86,6 +87,7 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().get("/questions?page=-1")
         self.assertEqual(res.status_code, 422)
 
+    # test delete_question
     def test_delete_question(self):
         # create a question and then delete
         # you can call the create endpoint but we are unittesting
@@ -119,6 +121,7 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().delete("/questions/"+str(0))
         self.assertEqual(res.status_code, 422)
 
+    # test add_question
     def test_add_question(self):
         # insert
         res = self.client().post("/questions",
@@ -155,7 +158,7 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(data["message"],"Bad request")
 
-
+    # test search_question
     def test_search_question(self):
         # postive search
         question = Question(question="testQuestionSearch", 
@@ -201,6 +204,7 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(data["message"],"Not Found")
 
+    # test get_questions_by_category
     def test_get_questions_by_category(self):
         # positive test
         res = self.client().get("/categories/" + str(self.testCategoryId) + "/questions")
@@ -226,6 +230,7 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().get("/categories/0/questions")
         self.assertEqual(res.status_code, 422)
     
+    # test get quizzes
     def test_quizzes(self):
         
 
@@ -234,8 +239,8 @@ class TriviaTestCase(unittest.TestCase):
                             category=self.testCategoryId,
                             difficulty=1)
             
-    #     # insert
-    #     question1.insert()
+        #     # insert
+        #     question1.insert()
         question2.insert()
 
 
