@@ -88,6 +88,153 @@ GET '/categories'
 '5' : "Entertainment",
 '6' : "Sports"}
 
+GET '/questions'
+- Fetches a list of all questions ten per pages governed by the request argument page
+- Request Argument: page (int)
+- Returns: An object containing total questions, list of JSON formatted questions
+{
+    "categories": {
+        "1": "Science", 
+        "2": "Art", 
+        "3": "Geography", 
+        "4": "History", 
+        "5": "Entertainment", 
+        "6": "Sports"
+    }, 
+    "currentCategory": "-", 
+    "questions": [
+        {
+            "answer": "Maya Angelou", 
+            "category": 4, 
+            "difficulty": 2, 
+            "id": 5, 
+            "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+        }, 
+        {
+            "answer": "Muhammad Ali", 
+            "category": 4, 
+            "difficulty": 1, 
+            "id": 9, 
+            "question": "What boxer's original name is Cassius Clay?"
+        }
+    ], 
+    "totalQuestions": 2
+}
+
+GET '/categories/<category_id>/questions'
+- Fetches a list of questions for a category with id <category_id>
+- Request Argument: none
+- Returns: An object containing total questions, list of JSON formatted questions as well as the currentCategory
+{
+    "currentCategory": "Geography", 
+    "questions": [
+            {
+                "answer": "Lake Victoria", 
+                "category": 3, 
+                "difficulty": 2, 
+                "id": 13, 
+                "question": "What is the largest lake in Africa?"
+            }, 
+            {
+                "answer": "The Palace of Versailles", 
+                "category": 3, 
+                "difficulty": 3, 
+                "id": 14, 
+                "question": "In which royal palace would you find the Hall of Mirrors?"
+            }, 
+            {
+                "answer": "Agra", 
+                "category": 3, 
+                "difficulty": 2, 
+                "id": 15, 
+                "question": "The Taj Mahal is located in which Indian city?"
+            }
+        ], 
+    "totalQuestions": 3
+}
+
+
+DELETE '/questions/<question_id>'
+- Deletes the question that matches the question_id
+- Request Arguments: none
+- Returns: A JSON object with the key 'success' to True if there was a successful deletion. If there was error, this renders a 422 response.
+{
+    "success": True
+}
+
+POST '/questions'
+- creates a new question from the request body
+- Request Arguments: none
+- Request Content-Type: 'Application/json'
+- Request Body: 
+{
+    "question" : " ",
+    "answer": " ",
+    "category": <category_id>,
+    "difficulty": 1
+}
+- Returns;  A JSON object with the key 'success' to True if there was a successful creation. If there were any errors, this renders a 404 response.
+
+POST '/questionsearch'
+- search a for a question by it's title
+= Request Arguments: none
+- Request Content-Type: 'Application/json'
+- Request Body: 
+{
+    "searchTerm": "<question title>"
+}
+- Returns: A JSON object with the number of questions found and the list of questions. If the question was not found, this renders a 404 response 
+{
+    "totalQuestions": len(questionResults),
+    "questions": questionResults,
+    "currentCategory": '-'
+}
+
+- POST '/quizzes'
+- retrieve a randoms question from the list of all questions or by a category as long as the question does not match a list of previous questions
+- Request Content-Type: 'Application/json'
+- Request Body: 
+{
+    "previous_questions": [], #previous question id
+    "quiz_category": {
+        "id": id,
+        "type": "type"
+    }
+}
+- Returns: A JSON object containing the key "question" if there is a question being return or an empty object if there are no more questions to be returned
+{
+    "question": {
+        "question" : " ",
+        "answer": " ",
+        "category": <category_id>,
+        "difficulty": 1
+    }
+}
+
+
+- ERROR 400
+- Returns: Response with the following body:
+{
+    "success": False,
+    "error": 400,
+    "message": "Bad request"
+}
+
+- ERROR 404
+- Returns: Response with the following body:
+{
+    "success": False,
+    "error": 404,
+    "message": "Not Found"
+}
+
+- ERROR 422
+- Returns: Response with the following body:
+{
+    "success": False,
+    "error": 422,
+    "message": "Unprocessable entity"
+}
 ```
 
 

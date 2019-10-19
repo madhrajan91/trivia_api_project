@@ -79,8 +79,6 @@ def create_app(test_config=None):
       questionsResult.append(question.format())
       if question.category not in categoryMap:
         categoryMap[question.category] = question.category_rec.type
-        #categories.append(question.category_rec.format())
-      #categories.append(question.category_rec.type + " " + str(question.category_rec.id))
     
     categories = Category.query.all()
     result = {}
@@ -90,8 +88,8 @@ def create_app(test_config=None):
     return jsonify({
       "totalQuestions": len(questionsResult),
       "questions":questionsResult,
-      "categories": result,#categoryMap,
-      "currentCategory": "-"
+      "categories": result, # this does not make sense for a list of questions but the react-app asked for it
+      "currentCategory": "-" # same as above, this is not applicable if we retrieve a list of questions
     })
   '''
   @TODO: 
@@ -189,7 +187,7 @@ def create_app(test_config=None):
       return jsonify({
         "totalQuestions": len(questionResults),
         "questions": questionResults,
-        "currentCategory": '-'
+        "currentCategory": '-' # does not make sense
       })
     else:
       abort(404)
@@ -254,13 +252,11 @@ def create_app(test_config=None):
     else:
       questions = Question.query.all()
 
-    l = len(previous_questions)
     print(previous_questions)
     filteredQuestions = []
-    if l>0:
+    if len(previous_questions)>0:
       for question in questions:
         if question.id not in previous_questions:
-          print(question.format())
           filteredQuestions.append(question)
     else:
       filteredQuestions = questions
